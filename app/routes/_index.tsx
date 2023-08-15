@@ -21,6 +21,40 @@ export const meta: V2_MetaFunction = () => {
   ];
 };
 
+const sanitizerOptions = {
+  allowedTags: [
+    "p",
+    "b",
+    "strong",
+    "i",
+    "em",
+    "u",
+    "a",
+    "br",
+    "ul",
+    "ol",
+    "li",
+    "h2",
+    "h3",
+    "h4",
+  ],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+  },
+  transformTags: {
+    a: (tagName, attribs) => {
+      return {
+        tagName,
+        attribs: {
+          ...attribs,
+          target: "_blank",
+          rel: "noopener noreferrer",
+        },
+      };
+    },
+  },
+} as sanitizeHtml.IOptions;
+
 export const loader = async (args: LoaderArgs) => {
   try {
     await ensureFile(contentPath);
@@ -55,9 +89,10 @@ export const action = async (args: ActionArgs) => {
   const text = formData.get("text");
   const textRTE = formData.get("textRTE");
 
-  console.log({ text, textRTE });
+  const sanitizedText = sanitizeHtml(textRTE as string, sanitizerOptions);
+
   try {
-    await writeJson(contentPath, { text, textRTE });
+    await writeJson(contentPath, { text, textRTE: sanitizedText });
     console.log("content written");
   } catch (error) {
     console.log({ error });
@@ -79,57 +114,37 @@ export default function Index() {
       const formData = new FormData(form);
       formData.set("text", editor.getText());
 
-      const sanitizedText = sanitizeHtml(editor.root.innerHTML as string, {
-        allowedTags: [
-          "p",
-          "b",
-          "strong",
-          "i",
-          "em",
-          "u",
-          "a",
-          "br",
-          "ul",
-          "ol",
-          "li",
-          "h1",
-          "h2",
-          "h3",
-          "h4",
-        ],
-        allowedAttributes: {
-          a: ["href", "target", "rel"],
-        },
-        transformTags: {
-          a: (tagName, attribs) => {
-            return {
-              tagName,
-              attribs: {
-                ...attribs,
-                target: "_blank",
-                rel: "noopener noreferrer",
-              },
-            };
-          },
-        },
-      });
+      const sanitizedText = sanitizeHtml(
+        editor.root.innerHTML as string,
+        sanitizerOptions
+      );
       formData.set("textRTE", sanitizedText);
 
       submit(formData, { method: "post" });
     }
   };
 
+  const content = sanitizeHtml(
+    loaderData.textRTE || loaderData.text || "",
+    sanitizerOptions
+  );
+
   return (
-    <Form onSubmit={handleSubmit}>
-      <ClientOnly>
-        {() => (
-          <RTE
-            editorRef={editorRef}
-            defaultValue={loaderData.textRTE || loaderData.text || ""}
-          />
-        )}
-      </ClientOnly>
-      <button type="submit">Submit</button>
-    </Form>
+    <>
+      <h1>
+        <u>Editor</u>
+      </h1>
+      <Form onSubmit={handleSubmit}>
+        <ClientOnly>
+          {() => <RTE editorRef={editorRef} defaultValue={content} />}
+        </ClientOnly>
+        <button type="submit">Submit</button>
+      </Form>
+      <hr />
+      <h1>
+        <u>Preview</u>
+      </h1>
+      <div dangerouslySetInnerHTML={{ __html: content }} />
+    </>
   );
 }
