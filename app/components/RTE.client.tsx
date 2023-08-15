@@ -72,7 +72,12 @@ function RTE(props: RTEProps) {
         value={value}
         onChange={setValue}
         ref={props.editorRef}
-        modules={{ toolbar: `#${toolbar}` }}
+        modules={{
+          toolbar: `#${toolbar}`,
+          clipboard: {
+            matchVisual: false,
+          },
+        }}
       />
       <p>
         {length}/{limit} Characters
