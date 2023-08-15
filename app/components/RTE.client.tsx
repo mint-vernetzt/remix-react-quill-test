@@ -4,6 +4,7 @@ import "react-quill/dist/quill.snow.css";
 
 export type RTEProps = {
   editorRef: React.MutableRefObject<ReactQuill | null>;
+  defaultValue: string;
 };
 
 function RTE(props: RTEProps) {
@@ -13,7 +14,7 @@ function RTE(props: RTEProps) {
 
   const toolbar = "toolbar_id";
 
-  const [value, setValue] = React.useState("");
+  const [value, setValue] = React.useState(props.defaultValue);
   const [length, setLength] = React.useState(0);
 
   React.useEffect(() => {
