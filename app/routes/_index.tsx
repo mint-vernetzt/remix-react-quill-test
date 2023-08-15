@@ -4,6 +4,7 @@ import { ClientOnly } from "remix-utils";
 import { Form, useSubmit } from "@remix-run/react";
 import React from "react";
 import type ReactQuill from "react-quill";
+import sanitizeHtml from "sanitize-html";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -37,7 +38,39 @@ export default function Index() {
       const form = event.currentTarget;
       const formData = new FormData(form);
       formData.set("text", editor.getText());
-      formData.set("textRTE", editor.root.innerHTML);
+
+      const sanitizedText = sanitizeHtml(editor.root.innerHTML as string, {
+        allowedTags: [
+          "p",
+          "b",
+          "strong",
+          "i",
+          "em",
+          "u",
+          "a",
+          "br",
+          "ul",
+          "ol",
+          "li",
+        ],
+        allowedAttributes: {
+          a: ["href", "target", "rel"],
+        },
+        transformTags: {
+          a: (tagName, attribs) => {
+            return {
+              tagName,
+              attribs: {
+                ...attribs,
+                target: "_blank",
+                rel: "noopener noreferrer",
+              },
+            };
+          },
+        },
+      });
+      formData.set("textRTE", sanitizedText);
+
       submit(formData, { method: "post" });
     }
   };
