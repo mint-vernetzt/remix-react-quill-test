@@ -3,14 +3,13 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 export type RTEProps = {
-  editorRef: React.MutableRefObject<ReactQuill | null>;
   defaultValue: string;
+  children?: React.ReactNode;
+  maxLength?: number;
 };
 
-function RTE(props: RTEProps) {
-  const { editorRef } = props;
-
-  const limit = 100;
+const RTE = React.forwardRef<ReactQuill, RTEProps>((props, ref) => {
+  const { maxLength = 2000 } = props;
 
   const toolbar = "toolbar_id";
 
@@ -18,19 +17,19 @@ function RTE(props: RTEProps) {
   const [length, setLength] = React.useState(0);
 
   React.useEffect(() => {
-    if (editorRef !== null && editorRef.current !== null) {
-      const editor = editorRef.current.getEditor();
+    if (ref !== null && ref.current !== null) {
+      const editor = ref.current.getEditor();
       const handleTextChange = () => {
         const newLength = editor.getLength() - 1;
 
-        if (newLength > limit) {
-          editor.deleteText(limit, newLength);
+        if (newLength > maxLength) {
+          editor.deleteText(maxLength, newLength);
         }
         setLength(newLength);
       };
       editor.on("text-change", handleTextChange);
     }
-  }, [editorRef]);
+  }, [ref]);
 
   return (
     <>
@@ -71,7 +70,7 @@ function RTE(props: RTEProps) {
         theme="snow"
         value={value}
         onChange={setValue}
-        ref={props.editorRef}
+        ref={ref}
         modules={{
           toolbar: `#${toolbar}`,
           clipboard: {
@@ -80,10 +79,11 @@ function RTE(props: RTEProps) {
         }}
       />
       <p>
-        {length}/{limit} Characters
+        {length}/{maxLength} Characters
       </p>
     </>
   );
-}
+});
+RTE.displayName = "RTE";
 
 export default RTE;

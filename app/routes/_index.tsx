@@ -136,7 +136,7 @@ export default function Index() {
       </h1>
       <Form onSubmit={handleSubmit}>
         <ClientOnly>
-          {() => <RTE editorRef={editorRef} defaultValue={content} />}
+          {() => <RTE ref={editorRef} defaultValue={content} />}
         </ClientOnly>
         <button type="submit">Submit</button>
       </Form>
